@@ -17,12 +17,15 @@ public class WebSocketConnection
         var factory = new Func<ClientWebSocket>(() =>
         {
             var ws = new ClientWebSocket();
+            //TODO: fix keepalive
+            ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(5);
             ws.Options.AddSubProtocol("v1.phonescoring.jd.ubisoft.com");
             return ws;
         });
         _ws = new WebsocketClient(new Uri($"ws://{host}:8080/smartphone"), factory);
         _ws.MessageReceived.Subscribe(async msg => await HandleOnMessage(msg));
         _ws.DisconnectionHappened.Subscribe(HandleOnClose);
+        _ws.IsReconnectionEnabled = false;
     }
 
     public bool IsAlive => _ws.IsStarted;
@@ -41,7 +44,7 @@ public class WebSocketConnection
                 Console.WriteLine("Got a binary. Skipping.");
                 return;
             case WebSocketMessageType.Close:
-                await Disconnect();
+                await DisconnectAsync();
                 return;
         }
 
@@ -55,11 +58,11 @@ public class WebSocketConnection
             {
                 if (data.ProtocolVersion > 3)
                 {
-                    await Disconnect();
+                    await DisconnectAsync();
                     break;
                 }
 
-                await Send(new JdPhoneDataCmdSync
+                await SendAsync(new JdPhoneDataCmdSync
                 {
                     PhoneId = data.PhoneId
                 });
@@ -67,7 +70,7 @@ public class WebSocketConnection
             }
             case JdPhoneDataCmdSyncEnd data:
             {
-                await Send(new JdPhoneDataCmdSyncEnd
+                await SendAsync(new JdPhoneDataCmdSyncEnd
                 {
                     PhoneId = data.PhoneId
                 });
@@ -91,7 +94,7 @@ public class WebSocketConnection
             case JdEnableCarouselConsoleCommandData _: break;
             case Jd2015NotPhoneScoring _:
             {
-                await Disconnect();
+                await DisconnectAsync();
                 break;
             }
             default:
@@ -100,13 +103,20 @@ public class WebSocketConnection
                 break;
             }
         }
+
+        HandleResponse(raw);
+    }
+
+    public virtual void HandleResponse(JdObject? response)
+    {
+        
     }
 
     public async Task ConnectAsync()
     {
         await _ws.Start();
         Console.WriteLine("Connected");
-        await Send(new JdPhoneDataCmdHandshakeHello
+        await SendAsync(new JdPhoneDataCmdHandshakeHello
         {
             //Android: "0.1" in code
             ClientVersion = "0.1",
@@ -122,14 +132,14 @@ public class WebSocketConnection
         });
     }
 
-    public async Task Disconnect()
+    public async Task DisconnectAsync()
     {
         //TODO: localizable strings
         Console.WriteLine("Disconnecting");
         await _ws.Stop(WebSocketCloseStatus.EndpointUnavailable, "CLOSE_GOING_AWAY");
     }
 
-    public async Task Send(object obj, bool wrapRoot = true)
+    public async Task SendAsync(object obj, bool wrapRoot = true)
     {
         var json = wrapRoot
             ? new Dictionary<string, object>
