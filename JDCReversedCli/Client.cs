@@ -73,6 +73,9 @@ public class Client : WebSocketConnection
             case NavigationAction.ActionLeft:
             case NavigationAction.ActionRight:
             {
+                if (_actionCount == 0)
+                    break;
+                
                 _currentAction = (_actionCount + _currentAction + (action == NavigationAction.ActionRight ? 1 : -1)) %
                                  _actionCount;
                 request = new JdChangeActionPhoneCommandData
@@ -86,6 +89,9 @@ public class Client : WebSocketConnection
             case NavigationAction.SwipeUp:
             case NavigationAction.SwipeDown:
             {
+                if (_rowCount == 0)
+                    break;
+                
                 _currentRow = (_rowCount + _currentRow + (action == NavigationAction.SwipeDown ? 1 : -1)) % _rowCount;
                 _currentItem = 0;
                 _currentAction = 0;
@@ -98,6 +104,9 @@ public class Client : WebSocketConnection
             case NavigationAction.SwipeLeft:
             case NavigationAction.SwipeRight:
             {
+                if (_itemCount == 0)
+                    break;
+                
                 _currentItem = (_itemCount + _currentItem + (action == NavigationAction.SwipeRight ? 1 : -1)) %
                                _itemCount;
                 _currentAction = 0;
