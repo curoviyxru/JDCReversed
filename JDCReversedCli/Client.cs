@@ -1,5 +1,4 @@
-﻿using System.Data;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using JDCReversed;
 using JDCReversed.Packets;
 using Valve.VR;
@@ -152,13 +151,18 @@ public class Client : WebSocketConnection
     {
         if (client != null && _sendScoringData)
         {
-            int delta = 1000 / 25;
-            for (int j = 0; j < 10; ++j)
+            int batchCount = 10;
+            int batchSize = 5;
+            int packetsTotal = batchCount * batchSize;
+            int delta = 1000 / packetsTotal;
+            double limit = 4;
+            double multiplier = 9.80665; //9.80665
+            for (int j = 0; j < batchCount; ++j)
             {
                 JdPhoneScoringData scoringData = new()
                 {
                     Timestamp = _scoringDataSent,
-                    AccelData = new AccelDataItem[4]
+                    AccelData = new AccelDataItem[batchSize]
                 };
 
                 for (int i = 0; i < scoringData.AccelData.Length; ++i)
@@ -169,17 +173,23 @@ public class Client : WebSocketConnection
                     OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, cid, ref controllerState, (uint)Marshal.SizeOf(typeof(VRControllerState_t)), ref trackedDevicePose);
                     scoringData.AccelData[i] = new AccelDataItem
                     {
-                        X = (trackedDevicePose.vVelocity.v2 - _previousVelocity.Z) * -1000 / delta / 9.80665,
-                        Y = (trackedDevicePose.vVelocity.v1 - _previousVelocity.Y) *  1000 / delta / 9.80665,
-                        Z = (trackedDevicePose.vVelocity.v0 - _previousVelocity.X) * -1000 / delta / 9.80665,
+                        X = Math.Clamp((trackedDevicePose.vVelocity.v1 - _previousVelocity.Y) * -1000 / delta / multiplier, -limit, limit),
+                        Y = Math.Clamp((trackedDevicePose.vVelocity.v2 - _previousVelocity.Z) * -1000 / delta / multiplier, -limit, limit),
+                        Z = Math.Clamp((trackedDevicePose.vVelocity.v0 - _previousVelocity.X) * -1000 / delta / multiplier, -limit, limit),
                     };
                     _scoringDataSent++;
                     _previousVelocity.X = trackedDevicePose.vVelocity.v0;
                     _previousVelocity.Y = trackedDevicePose.vVelocity.v1;
                     _previousVelocity.Z = trackedDevicePose.vVelocity.v2;
-                    float x = trackedDevicePose.mDeviceToAbsoluteTracking.m3;
-                    float y = trackedDevicePose.mDeviceToAbsoluteTracking.m7;
-                    float z = trackedDevicePose.mDeviceToAbsoluteTracking.m11;
+                    double x = trackedDevicePose.mDeviceToAbsoluteTracking.m3;
+                    double y = trackedDevicePose.mDeviceToAbsoluteTracking.m7;
+                    double z = trackedDevicePose.mDeviceToAbsoluteTracking.m11;
+                    x = scoringData.AccelData[i].X;
+                    y = scoringData.AccelData[i].Y;
+                    z = scoringData.AccelData[i].Z;
+                    x = trackedDevicePose.vVelocity.v0;
+                    y = trackedDevicePose.vVelocity.v1;
+                    z = trackedDevicePose.vVelocity.v2;
                     Console.WriteLine("Scoring data: " + i + " " + x + " " + y + " " + z + " " + trackedDevicePose.bPoseIsValid);
                     Thread.Sleep(delta);
                 }
@@ -197,7 +207,7 @@ public class Client : WebSocketConnection
 
     private static void StartOpenVR() {
         EVRInitError error = EVRInitError.None;
-        OpenVR.Init(ref error, EVRApplicationType.VRApplication_Overlay);
+        OpenVR.Init(ref error, EVRApplicationType.VRApplication_Background);
         
         for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; ++i) {
             ETrackedDeviceClass cls = OpenVR.System.GetTrackedDeviceClass(i);

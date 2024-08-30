@@ -121,12 +121,12 @@ public class WebSocketConnection
             //Android: "0.1" in code
             ClientVersion = "0.1",
             //Android: 0 in code
-            AccelAcquisitionFreqHz = 40,
+            AccelAcquisitionFreqHz = 50,
             //Not Android (iOS): 4f
             //Android: android.hardware.Sensor.getMaximumRange() / 9.80665f
-            AccelMaxRange = 8,
+            AccelMaxRange = 4,
             //Android: 40 in code
-            AccelAcquisitionLatency = 0,
+            AccelAcquisitionLatency = 25,
             //TODO: how to authorize?
             JmcsToken = string.Empty
         });
