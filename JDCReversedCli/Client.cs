@@ -1,5 +1,8 @@
-﻿using JDCReversed;
+﻿using System.Data;
+using System.Runtime.InteropServices;
+using JDCReversed;
 using JDCReversed.Packets;
+using Valve.VR;
 
 namespace JDCReversedCli;
 
@@ -17,6 +20,10 @@ public class Client : WebSocketConnection
     private int _rowCount;
     private int _itemCount;
     private int _actionCount;
+
+    private bool _sendScoringData;
+    private int _scoringDataSent;
+    private AccelDataItem _previousVelocity;
     
     private JdPhoneCarouselRow[]? _rows;
     
@@ -26,6 +33,8 @@ public class Client : WebSocketConnection
 
     public override void HandleResponse(JdObject? response)
     {
+        Console.WriteLine("Got response: " + response?.GetType());
+
         switch (response)
         {
             case JdPhoneUiSetupData data:
@@ -59,6 +68,18 @@ public class Client : WebSocketConnection
                     _currentAction = data.CarouselPosSetup.ActionIndex;
                 }
 
+                break;
+            }
+            case JdEnableAccelValuesSendingConsoleCommandData:
+            {
+                _scoringDataSent = 0;
+                _previousVelocity = new AccelDataItem();
+                _sendScoringData = true;
+                break;
+            }
+            case JdDisableAccelValuesSendingConsoleCommandData:
+            {
+                _sendScoringData = false;
                 break;
             }
         }
@@ -127,11 +148,72 @@ public class Client : WebSocketConnection
             await SendAsync(request);
     }
 
+    public async Task Update()
+    {
+        if (client != null && _sendScoringData)
+        {
+            int delta = 1000 / 25;
+            for (int j = 0; j < 10; ++j)
+            {
+                JdPhoneScoringData scoringData = new()
+                {
+                    Timestamp = _scoringDataSent,
+                    AccelData = new AccelDataItem[4]
+                };
+
+                for (int i = 0; i < scoringData.AccelData.Length; ++i)
+                {
+                    uint cid = foundControllerRight == invalidController ? foundController : foundControllerRight;
+                    VRControllerState_t controllerState = new();
+                    TrackedDevicePose_t trackedDevicePose = new();
+                    OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, cid, ref controllerState, (uint)Marshal.SizeOf(typeof(VRControllerState_t)), ref trackedDevicePose);
+                    scoringData.AccelData[i] = new AccelDataItem
+                    {
+                        X = (trackedDevicePose.vVelocity.v2 - _previousVelocity.Z) * -1000 / delta / 9.80665,
+                        Y = (trackedDevicePose.vVelocity.v1 - _previousVelocity.Y) *  1000 / delta / 9.80665,
+                        Z = (trackedDevicePose.vVelocity.v0 - _previousVelocity.X) * -1000 / delta / 9.80665,
+                    };
+                    _scoringDataSent++;
+                    _previousVelocity.X = trackedDevicePose.vVelocity.v0;
+                    _previousVelocity.Y = trackedDevicePose.vVelocity.v1;
+                    _previousVelocity.Z = trackedDevicePose.vVelocity.v2;
+                    float x = trackedDevicePose.mDeviceToAbsoluteTracking.m3;
+                    float y = trackedDevicePose.mDeviceToAbsoluteTracking.m7;
+                    float z = trackedDevicePose.mDeviceToAbsoluteTracking.m11;
+                    Console.WriteLine("Scoring data: " + i + " " + x + " " + y + " " + z + " " + trackedDevicePose.bPoseIsValid);
+                    Thread.Sleep(delta);
+                }
+
+                await client.SendAsync(scoringData);
+            }
+        }
+    }
+
     private static Client? client = null;
+
+    const uint invalidController = OpenVR.k_unMaxTrackedDeviceCount + 1;
+    static uint foundController = invalidController;
+    static uint foundControllerRight = invalidController;
+
+    private static void StartOpenVR() {
+        EVRInitError error = EVRInitError.None;
+        OpenVR.Init(ref error, EVRApplicationType.VRApplication_Overlay);
+        
+        for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; ++i) {
+            ETrackedDeviceClass cls = OpenVR.System.GetTrackedDeviceClass(i);
+            if (cls != ETrackedDeviceClass.Controller) continue;
+            ETrackedControllerRole role = OpenVR.System.GetControllerRoleForTrackedDeviceIndex(i);
+            if (foundController == invalidController) foundController = i;
+            if (foundControllerRight == invalidController && role == ETrackedControllerRole.RightHand) foundControllerRight = i; 
+        }
+
+        //OpenVR.Shutdown();
+    }
 
     public async static void Start()
     {
         KeyIntercept.OnKeyPressed += KeyPressed;
+        StartOpenVR();
         
         while (true)
         {
@@ -164,7 +246,7 @@ public class Client : WebSocketConnection
 
             while (client.IsAlive)
             {
-                
+                await client.Update();
             }
         }
     }

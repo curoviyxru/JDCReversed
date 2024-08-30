@@ -121,12 +121,12 @@ public class WebSocketConnection
             //Android: "0.1" in code
             ClientVersion = "0.1",
             //Android: 0 in code
-            AccelAcquisitionFreqHz = 0,
+            AccelAcquisitionFreqHz = 40,
             //Not Android (iOS): 4f
             //Android: android.hardware.Sensor.getMaximumRange() / 9.80665f
-            AccelMaxRange = 4,
+            AccelMaxRange = 8,
             //Android: 40 in code
-            AccelAcquisitionLatency = 40,
+            AccelAcquisitionLatency = 0,
             //TODO: how to authorize?
             JmcsToken = string.Empty
         });
@@ -141,13 +141,13 @@ public class WebSocketConnection
 
     public async Task SendAsync(object obj, bool wrapRoot = true)
     {
-        var json = wrapRoot
+        obj = wrapRoot
             ? new Dictionary<string, object>
             {
                 { "root", obj }
             }
             : obj;
-        var serialized = JsonConvert.SerializeObject(json);
+        var serialized = JdObject.Serialize(obj);
         if (PrintPackets)
             Console.WriteLine(serialized);
         await _ws.SendInstant(serialized);

@@ -1,4 +1,5 @@
-﻿using JDCReversed.JDTV;
+﻿using System.Runtime.Serialization;
+using JDCReversed.JDTV;
 using JDCReversed.Packets;
 using Newtonsoft.Json;
 
@@ -6,6 +7,12 @@ namespace JDCReversed;
 
 public class JdObject
 {
+    private static readonly JsonSerializerSettings JsonSettings = new()
+    {
+        MissingMemberHandling = MissingMemberHandling.Error,
+        Converters = [new AccelDataItemConverter()]
+    };
+
     [JsonConstructor]
     protected JdObject(string? className = null)
     {
@@ -18,7 +25,10 @@ public class JdObject
     {
         //TODO: automatic registration
         //TODO: JsonConverter
-        //TODO: JD_Custom_PhoneCommandData from modern client and other new packets
+        //TODO: JD_Custom_PhoneCommandData/JD_Input_PhoneCommandData from modern client and other new packets
+        //https://github.com/redphx/joydance/blob/main/joydance/__init__.py#L384
+        //game binary
+        //server spoofing
         var dict = new Dictionary<string, Type>
         {
             { "JD_PhoneDataCmdHandshakeHello", typeof(JdPhoneDataCmdHandshakeHello) },
@@ -78,9 +88,11 @@ public class JdObject
         var className =
             stub.ClassName.Trim().Split(new[] { "::" }, StringSplitOptions.None).LastOrDefault() ??
             string.Empty;
-        return JsonConvert.DeserializeObject(data, dict[className], new JsonSerializerSettings
-        {
-            MissingMemberHandling = MissingMemberHandling.Error
-        }) as JdObject ?? stub;
+        return JsonConvert.DeserializeObject(data, dict[className], JsonSettings) as JdObject ?? stub;
+    }
+
+    public static string Serialize(object obj)
+    {
+        return JsonConvert.SerializeObject(obj, JsonSettings);
     }
 }

@@ -1,6 +1,6 @@
 ﻿using JDCReversedCli;
 
-KeyIntercept.Start();
+//KeyIntercept.Start();
 
 new Thread(Client.Start).Start();
 

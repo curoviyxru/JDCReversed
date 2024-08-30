@@ -12,4 +12,10 @@
         <ProjectReference Include="..\JDCReversed\JDCReversed.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Content Include="openvr_api.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
 </Project>
