@@ -122,4 +122,91 @@ public class Client : WebSocketConnection
         if (request != null)
             await SendAsync(request);
     }
+
+    private static Client? client = null;
+
+    public async static void Start()
+    {
+        KeyIntercept.OnKeyPressed += KeyPressed;
+        
+        while (true)
+        {
+            Console.WriteLine("Hosts scanning started.");
+            var discovery = new DiscoveryManager
+            {
+                SingleShot = true
+            };
+            discovery.Discover();
+            //TODO: refactor it
+            while (!discovery.IsCompleted)
+            {
+            }
+
+            if (discovery.FoundHosts.Count == 0)
+            {
+                Console.WriteLine("I haven't found any hosts.");
+                return;
+            }
+
+            var host = discovery.FoundHosts.First();
+            Console.WriteLine($"Connecting using first found host: {host}.");
+
+            client = new Client(host)
+            {
+                PrintPackets = false
+            };
+
+            await client.ConnectAsync();
+
+            while (client.IsAlive)
+            {
+                
+            }
+        }
+    }
+
+    public static async void KeyPressed(ConsoleKey key) {
+        if (client == null) {
+            return;
+        }
+
+        switch (key)
+        {
+            case ConsoleKey.U:
+                {
+                    await client.DisconnectAsync();
+                    return;
+                }
+            case ConsoleKey.J:
+                {
+                    await client.Navigate(Client.NavigationAction.SwipeLeft);
+                    break;
+                }
+            case ConsoleKey.L:
+                {
+                    await client.Navigate(Client.NavigationAction.SwipeRight);
+                    break;
+                }
+            case ConsoleKey.I:
+                {
+                    await client.Navigate(Client.NavigationAction.SwipeUp);
+                    break;
+                }
+            case ConsoleKey.K:
+                {
+                    await client.Navigate(Client.NavigationAction.SwipeDown);
+                    break;
+                }
+            case ConsoleKey.O:
+                {
+                    await client.Navigate(Client.NavigationAction.ActionLeft);
+                    break;
+                }
+            case ConsoleKey.P:
+                {
+                    await client.Navigate(Client.NavigationAction.ActionRight);
+                    break;
+                }
+        }
+    }
 }

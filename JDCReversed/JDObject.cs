@@ -27,9 +27,7 @@ public class JdObject
             { "JD_PhoneDataCmdSyncStart", typeof(JdPhoneDataCmdSyncStart) },
             { "JD_PhoneDataCmdSyncEnd", typeof(JdPhoneDataCmdSyncEnd) },
             { "JD_EnableAccelValuesSending_ConsoleCommandData", typeof(JdEnableAccelValuesSendingConsoleCommandData) },
-            {
-                "JD_DisableAccelValuesSending_ConsoleCommandData", typeof(JdDisableAccelValuesSendingConsoleCommandData)
-            },
+            { "JD_DisableAccelValuesSending_ConsoleCommandData", typeof(JdDisableAccelValuesSendingConsoleCommandData) },
             { "JD_PhoneUiSetupData", typeof(JdPhoneUiSetupData) },
             { "InputSetup_ConsoleCommandData", typeof(JdInputSetupConsoleCommandData) },
             { "JD_ProfilePhoneUiData", typeof(JdProfilePhoneUiData) },
