@@ -76,8 +76,9 @@ public class Client : WebSocketConnection
                 if (_actionCount == 0)
                     break;
                 
-                _currentAction = (_actionCount + _currentAction + (action == NavigationAction.ActionRight ? 1 : -1)) %
-                                 _actionCount;
+                int delta = action == NavigationAction.ActionRight ? 1 : -1;
+
+                _currentAction = (_actionCount + _currentAction + delta) % _actionCount;
                 request = new JdChangeActionPhoneCommandData
                 {
                     RowIndex = _currentRow,
@@ -92,7 +93,9 @@ public class Client : WebSocketConnection
                 if (_rowCount == 0)
                     break;
                 
-                _currentRow = (_rowCount + _currentRow + (action == NavigationAction.SwipeDown ? 1 : -1)) % _rowCount;
+                int delta = action == NavigationAction.SwipeDown ? 1 : -1;
+
+                _currentRow = (_rowCount + _currentRow + delta) % _rowCount;
                 _currentItem = 0;
                 _currentAction = 0;
                 request = new JdChangeRowPhoneCommandData
@@ -107,8 +110,9 @@ public class Client : WebSocketConnection
                 if (_itemCount == 0)
                     break;
                 
-                _currentItem = (_itemCount + _currentItem + (action == NavigationAction.SwipeRight ? 1 : -1)) %
-                               _itemCount;
+                int delta = action == NavigationAction.SwipeRight ? 1 : -1;
+
+                _currentItem = (_itemCount + _currentItem + delta) % _itemCount;
                 _currentAction = 0;
                 request = new JdChangeItemPhoneCommandData
                 {
