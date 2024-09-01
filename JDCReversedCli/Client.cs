@@ -173,9 +173,12 @@ public class Client : WebSocketConnection
                     OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, cid, ref controllerState, (uint)Marshal.SizeOf(typeof(VRControllerState_t)), ref trackedDevicePose);
                     scoringData.AccelData[i] = new AccelDataItem
                     {
-                        X = Math.Clamp((trackedDevicePose.vVelocity.v1 - _previousVelocity.Y) * -1000 / delta / multiplier, -limit, limit),
-                        Y = Math.Clamp((trackedDevicePose.vVelocity.v2 - _previousVelocity.Z) * -1000 / delta / multiplier, -limit, limit),
-                        Z = Math.Clamp((trackedDevicePose.vVelocity.v0 - _previousVelocity.X) * -1000 / delta / multiplier, -limit, limit),
+                        //Player's left - right
+                        X = Math.Clamp((trackedDevicePose.vVelocity.v0 - _previousVelocity.X) * -1000 / delta / multiplier, -limit, limit),
+                        //Player's up - down
+                        Y = Math.Clamp((trackedDevicePose.vVelocity.v1 - _previousVelocity.Y) *  1000 / delta / multiplier, -limit, limit),
+                        //Player's forward - backward
+                        Z = Math.Clamp((trackedDevicePose.vVelocity.v2 - _previousVelocity.Z) *  1000 / delta / multiplier, -limit, limit),
                     };
                     _scoringDataSent++;
                     _previousVelocity.X = trackedDevicePose.vVelocity.v0;
@@ -184,12 +187,12 @@ public class Client : WebSocketConnection
                     double x = trackedDevicePose.mDeviceToAbsoluteTracking.m3;
                     double y = trackedDevicePose.mDeviceToAbsoluteTracking.m7;
                     double z = trackedDevicePose.mDeviceToAbsoluteTracking.m11;
-                    x = scoringData.AccelData[i].X;
-                    y = scoringData.AccelData[i].Y;
-                    z = scoringData.AccelData[i].Z;
-                    x = trackedDevicePose.vVelocity.v0;
-                    y = trackedDevicePose.vVelocity.v1;
-                    z = trackedDevicePose.vVelocity.v2;
+                    //x = scoringData.AccelData[i].X;
+                    //y = scoringData.AccelData[i].Y;
+                    //z = scoringData.AccelData[i].Z;
+                    //x = trackedDevicePose.vVelocity.v0;
+                    //y = trackedDevicePose.vVelocity.v1;
+                    //z = trackedDevicePose.vVelocity.v2;
                     Console.WriteLine("Scoring data: " + i + " " + x + " " + y + " " + z + " " + trackedDevicePose.bPoseIsValid);
                     Thread.Sleep(delta);
                 }
