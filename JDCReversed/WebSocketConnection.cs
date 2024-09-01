@@ -126,7 +126,7 @@ public class WebSocketConnection
             //Android: android.hardware.Sensor.getMaximumRange() / 9.80665f
             AccelMaxRange = 4,
             //Android: 40 in code
-            AccelAcquisitionLatency = 25,
+            AccelAcquisitionLatency = 50,
             //TODO: how to authorize?
             JmcsToken = string.Empty
         });

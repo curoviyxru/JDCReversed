@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using JDCReversed;
 using JDCReversed.Packets;
+using System.Numerics;
 using Valve.VR;
 
 namespace JDCReversedCli;
@@ -22,6 +23,7 @@ public class Client : WebSocketConnection
 
     private bool _sendScoringData;
     private int _scoringDataSent;
+    private Vector3 _lastVelocity;
 
     private JdPhoneCarouselRow[]? _rows;
 
@@ -71,7 +73,7 @@ public class Client : WebSocketConnection
             case JdEnableAccelValuesSendingConsoleCommandData:
                 {
                     _scoringDataSent = 0;
-                    lastVelocity = new HmdVector3_t();
+                    _lastVelocity = new Vector3();
                     _sendScoringData = true;
                     break;
                 }
@@ -146,64 +148,59 @@ public class Client : WebSocketConnection
             await SendAsync(request);
     }
 
-    VRControllerState_t controllerState = new();
-    TrackedDevicePose_t trackedDevicePose = new();
-    HmdVector3_t lastVelocity = new();
-    HmdVector3_t acceleration = new();
-    HmdVector3_t gravity = new();
+    const float GRAVITY = 9.80665f;
+
+    static Vector3 ApplyGravityAndRotation(HmdMatrix34_t matrix, Vector3 acceleration)
+    {
+        // Define the gravity vector
+        Vector3 gravityVector = new(0, -GRAVITY, 0); // Gravity acts downwards in Z axis
+
+        // Convert the HMDMatrix34_t to a rotation matrix (3x3)
+        Matrix4x4 rotationMatrix = new(
+            matrix.m0, matrix.m1, matrix.m2, 0,
+            matrix.m4, matrix.m5, matrix.m6, 0,
+            matrix.m8, matrix.m9, matrix.m10, 0,
+            0, 0, 0, 1
+        );
+
+        // Rotate the acceleration vector by the controller's rotation matrix
+        acceleration = Vector3.Transform(acceleration + gravityVector, rotationMatrix);
+
+        return acceleration;
+    }
 
     public void GetAccelValues(ref AccelDataItem accelDataItem, float delta)
     {
-        const float limit = 4.0f; //Declared in connection init
-        const float gravityValue = 9.80665f;
+        const float LIMIT = 4.0f; //Declared in connection init
+
+        VRControllerState_t controllerState = new();
+        TrackedDevicePose_t trackedDevicePose = new();
 
         uint cid = foundControllerRight == invalidController ? foundController : foundControllerRight;
         OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, cid, ref controllerState, (uint) Marshal.SizeOf(typeof(VRControllerState_t)), ref trackedDevicePose);
         
-        HmdVector3_t velocity = trackedDevicePose.vVelocity;
-        HmdMatrix34_t matrix = trackedDevicePose.mDeviceToAbsoluteTracking;
+        Vector3 velocity = new(trackedDevicePose.vVelocity.v0, trackedDevicePose.vVelocity.v1, trackedDevicePose.vVelocity.v2);
+        Vector3 acceleration = (velocity - _lastVelocity) / delta;
+        _lastVelocity = velocity;
 
-        // Calculate change in velocity to get acceleration
-        acceleration.v0 = (velocity.v0 - lastVelocity.v0) / delta;
-        acceleration.v1 = (velocity.v1 - lastVelocity.v1) / delta;
-        acceleration.v2 = (velocity.v2 - lastVelocity.v2) / delta;
-
-        lastVelocity = velocity;
-
-        // Gravity in world space (Y axis)
-        gravity.v0 = 0.0f;
-        gravity.v1 = -gravityValue;
-        gravity.v2 = 0.0f;
-
-        // Transform gravity to the local controller space
-        gravity.v0 = matrix.m0 * gravity.v0 + matrix.m1 * gravity.v1 + matrix.m2  * gravity.v2;
-        gravity.v1 = matrix.m4 * gravity.v0 + matrix.m5 * gravity.v1 + matrix.m6  * gravity.v2;
-        gravity.v2 = matrix.m8 * gravity.v0 + matrix.m9 * gravity.v1 + matrix.m10 * gravity.v2;
-
-        // Combine acceleration with gravity
-        acceleration.v0 += gravity.v0;
-        acceleration.v1 += gravity.v1;
-        acceleration.v2 += gravity.v2;
-
-        // Convert acceleration to g units
-        acceleration.v0 /= gravityValue;
-        acceleration.v1 /= gravityValue;
-        acceleration.v2 /= gravityValue;
+        acceleration = ApplyGravityAndRotation(trackedDevicePose.mDeviceToAbsoluteTracking, acceleration);
+        Vector3 accelerationInGs = acceleration / GRAVITY;
 
         // Set data message values
-        accelDataItem.X = Math.Clamp(acceleration.v0, -limit, limit);
-        accelDataItem.Y = Math.Clamp(acceleration.v1, -limit, limit);
-        accelDataItem.Z = Math.Clamp(acceleration.v2, -limit, limit);
+        accelDataItem.X = Math.Clamp(accelerationInGs.Y, -LIMIT, LIMIT);
+        accelDataItem.Y = Math.Clamp(-accelerationInGs.Z, -LIMIT, LIMIT);
+        accelDataItem.Z = Math.Clamp(-accelerationInGs.X, -LIMIT, LIMIT);
     }
 
     public async Task Update()
     {
         if (client != null && _sendScoringData)
         {
-            int batchCount = 10;
-            int batchSize = 5;
+            int batchCount = 25;
+            int batchSize = 2;
             int packetsTotal = batchCount * batchSize; //Declared in connection init
             int delta = 1000 / packetsTotal;
+            int accelAcqLatency = delta * batchSize; //Declared in connection init
 
             for (int j = 0; j < batchCount; ++j)
             {
