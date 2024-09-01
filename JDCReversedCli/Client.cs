@@ -11,7 +11,7 @@ public class Client : WebSocketConnection
     {
         SwipeLeft, SwipeRight, SwipeUp, SwipeDown, ActionLeft, ActionRight
     }
-    
+
     private int _currentRow;
     private int _currentItem;
     private int _currentAction;
@@ -22,10 +22,9 @@ public class Client : WebSocketConnection
 
     private bool _sendScoringData;
     private int _scoringDataSent;
-    private AccelDataItem _previousVelocity;
-    
+
     private JdPhoneCarouselRow[]? _rows;
-    
+
     public Client(string host) : base(host)
     {
     }
@@ -37,50 +36,50 @@ public class Client : WebSocketConnection
         switch (response)
         {
             case JdPhoneUiSetupData data:
-            {
-                _rows = data.SetupData?.MainCarousel?.Rows; 
-                if (_rows != null) _rowCount = _rows.Length;
-                
-                if (data.InputSetup?.CarouselPosSetup != null)
                 {
-                    _currentRow = data.InputSetup.CarouselPosSetup.RowIndex;
-                    var rowItems = _rows?[_currentRow].Items;
-                    if (rowItems != null) _itemCount = rowItems.Length;
-                    _currentItem = data.InputSetup.CarouselPosSetup.ItemIndex;
-                    var actionItems = rowItems?[_currentItem].Actions;
-                    if (actionItems != null) _actionCount = actionItems.Length;
-                    _currentAction = data.InputSetup.CarouselPosSetup.ActionIndex;
-                }
+                    _rows = data.SetupData?.MainCarousel?.Rows;
+                    if (_rows != null) _rowCount = _rows.Length;
 
-                break;
-            }
+                    if (data.InputSetup?.CarouselPosSetup != null)
+                    {
+                        _currentRow = data.InputSetup.CarouselPosSetup.RowIndex;
+                        var rowItems = _rows?[_currentRow].Items;
+                        if (rowItems != null) _itemCount = rowItems.Length;
+                        _currentItem = data.InputSetup.CarouselPosSetup.ItemIndex;
+                        var actionItems = rowItems?[_currentItem].Actions;
+                        if (actionItems != null) _actionCount = actionItems.Length;
+                        _currentAction = data.InputSetup.CarouselPosSetup.ActionIndex;
+                    }
+
+                    break;
+                }
             case JdInputSetupConsoleCommandData data:
-            {
-                if (data.CarouselPosSetup != null)
                 {
-                    _currentRow = data.CarouselPosSetup.RowIndex;
-                    var rowItems = _rows?[_currentRow].Items;
-                    if (rowItems != null) _itemCount = rowItems.Length;
-                    _currentItem = data.CarouselPosSetup.ItemIndex;
-                    var actionItems = rowItems?[_currentItem].Actions;
-                    if (actionItems != null) _actionCount = actionItems.Length;
-                    _currentAction = data.CarouselPosSetup.ActionIndex;
-                }
+                    if (data.CarouselPosSetup != null)
+                    {
+                        _currentRow = data.CarouselPosSetup.RowIndex;
+                        var rowItems = _rows?[_currentRow].Items;
+                        if (rowItems != null) _itemCount = rowItems.Length;
+                        _currentItem = data.CarouselPosSetup.ItemIndex;
+                        var actionItems = rowItems?[_currentItem].Actions;
+                        if (actionItems != null) _actionCount = actionItems.Length;
+                        _currentAction = data.CarouselPosSetup.ActionIndex;
+                    }
 
-                break;
-            }
+                    break;
+                }
             case JdEnableAccelValuesSendingConsoleCommandData:
-            {
-                _scoringDataSent = 0;
-                _previousVelocity = new AccelDataItem();
-                _sendScoringData = true;
-                break;
-            }
+                {
+                    _scoringDataSent = 0;
+                    lastVelocity = new HmdVector3_t();
+                    _sendScoringData = true;
+                    break;
+                }
             case JdDisableAccelValuesSendingConsoleCommandData:
-            {
-                _sendScoringData = false;
-                break;
-            }
+                {
+                    _sendScoringData = false;
+                    break;
+                }
         }
     }
 
@@ -92,59 +91,109 @@ public class Client : WebSocketConnection
         {
             case NavigationAction.ActionLeft:
             case NavigationAction.ActionRight:
-            {
-                if (_actionCount == 0)
-                    break;
-                
-                int delta = action == NavigationAction.ActionRight ? 1 : -1;
-
-                _currentAction = (_actionCount + _currentAction + delta) % _actionCount;
-                request = new JdChangeActionPhoneCommandData
                 {
-                    RowIndex = _currentRow,
-                    ItemIndex = _currentItem,
-                    ActionIndex = _currentAction
-                };
-                break;
-            }
+                    if (_actionCount == 0)
+                        break;
+
+                    int delta = action == NavigationAction.ActionRight ? 1 : -1;
+
+                    _currentAction = (_actionCount + _currentAction + delta) % _actionCount;
+                    request = new JdChangeActionPhoneCommandData
+                    {
+                        RowIndex = _currentRow,
+                        ItemIndex = _currentItem,
+                        ActionIndex = _currentAction
+                    };
+                    break;
+                }
             case NavigationAction.SwipeUp:
             case NavigationAction.SwipeDown:
-            {
-                if (_rowCount == 0)
-                    break;
-                
-                int delta = action == NavigationAction.SwipeDown ? 1 : -1;
-
-                _currentRow = (_rowCount + _currentRow + delta) % _rowCount;
-                _currentItem = 0;
-                _currentAction = 0;
-                request = new JdChangeRowPhoneCommandData
                 {
-                    RowIndex = _currentRow
-                };
-                break;
-            }
+                    if (_rowCount == 0)
+                        break;
+
+                    int delta = action == NavigationAction.SwipeDown ? 1 : -1;
+
+                    _currentRow = (_rowCount + _currentRow + delta) % _rowCount;
+                    _currentItem = 0;
+                    _currentAction = 0;
+                    request = new JdChangeRowPhoneCommandData
+                    {
+                        RowIndex = _currentRow
+                    };
+                    break;
+                }
             case NavigationAction.SwipeLeft:
             case NavigationAction.SwipeRight:
-            {
-                if (_itemCount == 0)
-                    break;
-                
-                int delta = action == NavigationAction.SwipeRight ? 1 : -1;
-
-                _currentItem = (_itemCount + _currentItem + delta) % _itemCount;
-                _currentAction = 0;
-                request = new JdChangeItemPhoneCommandData
                 {
-                    RowIndex = _currentRow,
-                    ItemIndex = _currentItem
-                };
-                break;
-            }
+                    if (_itemCount == 0)
+                        break;
+
+                    int delta = action == NavigationAction.SwipeRight ? 1 : -1;
+
+                    _currentItem = (_itemCount + _currentItem + delta) % _itemCount;
+                    _currentAction = 0;
+                    request = new JdChangeItemPhoneCommandData
+                    {
+                        RowIndex = _currentRow,
+                        ItemIndex = _currentItem
+                    };
+                    break;
+                }
         }
-        
+
         if (request != null)
             await SendAsync(request);
+    }
+
+    VRControllerState_t controllerState = new();
+    TrackedDevicePose_t trackedDevicePose = new();
+    HmdVector3_t lastVelocity = new();
+    HmdVector3_t acceleration = new();
+    HmdVector3_t gravity = new();
+
+    public void GetAccelValues(ref AccelDataItem accelDataItem, float delta)
+    {
+        const float limit = 4.0f; //Declared in connection init
+        const float gravityValue = 9.80665f;
+
+        uint cid = foundControllerRight == invalidController ? foundController : foundControllerRight;
+        OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, cid, ref controllerState, (uint) Marshal.SizeOf(typeof(VRControllerState_t)), ref trackedDevicePose);
+        
+        HmdVector3_t velocity = trackedDevicePose.vVelocity;
+        HmdMatrix34_t matrix = trackedDevicePose.mDeviceToAbsoluteTracking;
+
+        // Calculate change in velocity to get acceleration
+        acceleration.v0 = (velocity.v0 - lastVelocity.v0) / delta;
+        acceleration.v1 = (velocity.v1 - lastVelocity.v1) / delta;
+        acceleration.v2 = (velocity.v2 - lastVelocity.v2) / delta;
+
+        lastVelocity = velocity;
+
+        // Gravity in world space (Y axis)
+        gravity.v0 = 0.0f;
+        gravity.v1 = -gravityValue;
+        gravity.v2 = 0.0f;
+
+        // Transform gravity to the local controller space
+        gravity.v0 = matrix.m0 * gravity.v0 + matrix.m1 * gravity.v1 + matrix.m2  * gravity.v2;
+        gravity.v1 = matrix.m4 * gravity.v0 + matrix.m5 * gravity.v1 + matrix.m6  * gravity.v2;
+        gravity.v2 = matrix.m8 * gravity.v0 + matrix.m9 * gravity.v1 + matrix.m10 * gravity.v2;
+
+        // Combine acceleration with gravity
+        acceleration.v0 += gravity.v0;
+        acceleration.v1 += gravity.v1;
+        acceleration.v2 += gravity.v2;
+
+        // Convert acceleration to g units
+        acceleration.v0 /= gravityValue;
+        acceleration.v1 /= gravityValue;
+        acceleration.v2 /= gravityValue;
+
+        // Set data message values
+        accelDataItem.X = Math.Clamp(acceleration.v0, -limit, limit);
+        accelDataItem.Y = Math.Clamp(acceleration.v1, -limit, limit);
+        accelDataItem.Z = Math.Clamp(acceleration.v2, -limit, limit);
     }
 
     public async Task Update()
@@ -153,10 +202,9 @@ public class Client : WebSocketConnection
         {
             int batchCount = 10;
             int batchSize = 5;
-            int packetsTotal = batchCount * batchSize;
+            int packetsTotal = batchCount * batchSize; //Declared in connection init
             int delta = 1000 / packetsTotal;
-            double limit = 4;
-            double multiplier = 9.80665; //9.80665
+
             for (int j = 0; j < batchCount; ++j)
             {
                 JdPhoneScoringData scoringData = new()
@@ -167,33 +215,9 @@ public class Client : WebSocketConnection
 
                 for (int i = 0; i < scoringData.AccelData.Length; ++i)
                 {
-                    uint cid = foundControllerRight == invalidController ? foundController : foundControllerRight;
-                    VRControllerState_t controllerState = new();
-                    TrackedDevicePose_t trackedDevicePose = new();
-                    OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, cid, ref controllerState, (uint)Marshal.SizeOf(typeof(VRControllerState_t)), ref trackedDevicePose);
-                    scoringData.AccelData[i] = new AccelDataItem
-                    {
-                        //Player's left - right
-                        X = Math.Clamp((trackedDevicePose.vVelocity.v0 - _previousVelocity.X) * -1000 / delta / multiplier, -limit, limit),
-                        //Player's up - down
-                        Y = Math.Clamp((trackedDevicePose.vVelocity.v1 - _previousVelocity.Y) *  1000 / delta / multiplier, -limit, limit),
-                        //Player's forward - backward
-                        Z = Math.Clamp((trackedDevicePose.vVelocity.v2 - _previousVelocity.Z) *  1000 / delta / multiplier, -limit, limit),
-                    };
+                    GetAccelValues(ref scoringData.AccelData[i], delta / 1000.0f);
+                    Console.WriteLine(scoringData.AccelData[i].X + " " + scoringData.AccelData[i].Y + " " + scoringData.AccelData[i].Z);
                     _scoringDataSent++;
-                    _previousVelocity.X = trackedDevicePose.vVelocity.v0;
-                    _previousVelocity.Y = trackedDevicePose.vVelocity.v1;
-                    _previousVelocity.Z = trackedDevicePose.vVelocity.v2;
-                    double x = trackedDevicePose.mDeviceToAbsoluteTracking.m3;
-                    double y = trackedDevicePose.mDeviceToAbsoluteTracking.m7;
-                    double z = trackedDevicePose.mDeviceToAbsoluteTracking.m11;
-                    //x = scoringData.AccelData[i].X;
-                    //y = scoringData.AccelData[i].Y;
-                    //z = scoringData.AccelData[i].Z;
-                    //x = trackedDevicePose.vVelocity.v0;
-                    //y = trackedDevicePose.vVelocity.v1;
-                    //z = trackedDevicePose.vVelocity.v2;
-                    Console.WriteLine("Scoring data: " + i + " " + x + " " + y + " " + z + " " + trackedDevicePose.bPoseIsValid);
                     Thread.Sleep(delta);
                 }
 
@@ -208,16 +232,18 @@ public class Client : WebSocketConnection
     static uint foundController = invalidController;
     static uint foundControllerRight = invalidController;
 
-    private static void StartOpenVR() {
+    private static void StartOpenVR()
+    {
         EVRInitError error = EVRInitError.None;
         OpenVR.Init(ref error, EVRApplicationType.VRApplication_Background);
-        
-        for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; ++i) {
+
+        for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; ++i)
+        {
             ETrackedDeviceClass cls = OpenVR.System.GetTrackedDeviceClass(i);
             if (cls != ETrackedDeviceClass.Controller) continue;
             ETrackedControllerRole role = OpenVR.System.GetControllerRoleForTrackedDeviceIndex(i);
             if (foundController == invalidController) foundController = i;
-            if (foundControllerRight == invalidController && role == ETrackedControllerRole.RightHand) foundControllerRight = i; 
+            if (foundControllerRight == invalidController && role == ETrackedControllerRole.RightHand) foundControllerRight = i;
         }
 
         //OpenVR.Shutdown();
@@ -227,7 +253,7 @@ public class Client : WebSocketConnection
     {
         KeyIntercept.OnKeyPressed += KeyPressed;
         StartOpenVR();
-        
+
         while (true)
         {
             Console.WriteLine("Hosts scanning started.");
@@ -264,8 +290,10 @@ public class Client : WebSocketConnection
         }
     }
 
-    public static async void KeyPressed(ConsoleKey key) {
-        if (client == null) {
+    public static async void KeyPressed(ConsoleKey key)
+    {
+        if (client == null)
+        {
             return;
         }
 
