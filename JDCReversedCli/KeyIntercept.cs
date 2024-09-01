@@ -7,17 +7,16 @@ public class KeyIntercept
 {
     private const int WH_KEYBOARD_LL = 13;
     private const int WM_KEYDOWN = 0x0100;
-    private static LowLevelKeyboardProc _proc = HookCallback;
-    private static IntPtr _hookID = IntPtr.Zero;
+    private IntPtr _hookID = IntPtr.Zero;
 
-    public static Action<ConsoleKey>? OnKeyPressed { get; internal set; }
+    public Action<ConsoleKey>? KeyPressed { get; set; }
 
-    public static void Start()
+    public void Start()
     {
-        _hookID = SetHook(_proc);
+        _hookID = SetHook(HookCallback);
     }
 
-    public static void Stop()
+    public void Stop()
     {
         UnhookWindowsHookEx(_hookID);
     }
@@ -36,12 +35,12 @@ public class KeyIntercept
 
     private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
-    private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+    private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
         if (nCode >= 0 && wParam == WM_KEYDOWN)
         {
             int vkCode = Marshal.ReadInt32(lParam);
-            OnKeyPressed?.Invoke((ConsoleKey) vkCode);
+            KeyPressed?.Invoke((ConsoleKey) vkCode);
         }
 
         return CallNextHookEx(_hookID, nCode, wParam, lParam);

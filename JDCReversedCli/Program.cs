@@ -1,9 +1,7 @@
 ﻿using JDCReversedCli;
 
-//KeyIntercept.Start();
+var client = new Client();
 
-new Thread(Client.Start).Start();
+client.Start();
 
 Application.Run();
-
-KeyIntercept.Stop();

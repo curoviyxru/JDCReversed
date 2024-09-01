@@ -1,13 +1,16 @@
-﻿using System.Runtime.InteropServices;
-using JDCReversed;
+﻿using JDCReversed;
 using JDCReversed.Packets;
-using System.Numerics;
-using Valve.VR;
 
 namespace JDCReversedCli;
 
-public class Client : WebSocketConnection
+public class Client
 {
+    const int AccelBatchCount = 25;
+    const int AccelBatchSize = 2;
+    const int AccelTotalPackets = AccelBatchCount * AccelBatchSize;
+    const int AccelAcqDelta = 1000 / AccelTotalPackets;
+    const int AccelAcqLatency = AccelAcqDelta * AccelBatchSize;
+
     public enum NavigationAction
     {
         SwipeLeft, SwipeRight, SwipeUp, SwipeDown, ActionLeft, ActionRight
@@ -23,15 +26,21 @@ public class Client : WebSocketConnection
 
     private bool _sendScoringData;
     private int _scoringDataSent;
-    private Vector3 _lastVelocity;
 
     private JdPhoneCarouselRow[]? _rows;
 
-    public Client(string host) : base(host)
+    public bool Started { private set; get; } = false;
+
+    private WebSocketConnection? _connection;
+    private KeyIntercept _intercept = new();
+    private OpenVRHandler _vrHandler = new();
+
+    public Client()
     {
+
     }
 
-    public override void HandleResponse(JdObject? response)
+    public void HandleResponse(JdObject? response)
     {
         Console.WriteLine("Got response: " + response?.GetType());
 
@@ -73,7 +82,8 @@ public class Client : WebSocketConnection
             case JdEnableAccelValuesSendingConsoleCommandData:
                 {
                     _scoringDataSent = 0;
-                    _lastVelocity = new Vector3();
+                    _vrHandler.ResetLastVelocity();
+
                     _sendScoringData = true;
                     break;
                 }
@@ -87,6 +97,11 @@ public class Client : WebSocketConnection
 
     public async Task Navigate(NavigationAction action)
     {
+        if (_connection == null)
+        {
+            return;
+        }
+
         JdObject? request = null;
 
         switch (action)
@@ -145,120 +160,84 @@ public class Client : WebSocketConnection
         }
 
         if (request != null)
-            await SendAsync(request);
-    }
-
-    const float GRAVITY = 9.80665f;
-
-    static Vector3 ApplyGravityAndRotation(HmdMatrix34_t matrix, Vector3 acceleration)
-    {
-        // Define the gravity vector
-        Vector3 gravityVector = new(0, -GRAVITY, 0); // Gravity acts downwards in Z axis
-
-        // Convert the HMDMatrix34_t to a rotation matrix (3x3)
-        Matrix4x4 rotationMatrix = new(
-            matrix.m0, matrix.m1, matrix.m2, 0,
-            matrix.m4, matrix.m5, matrix.m6, 0,
-            matrix.m8, matrix.m9, matrix.m10, 0,
-            0, 0, 0, 1
-        );
-
-        // Rotate the acceleration vector by the controller's rotation matrix
-        acceleration = Vector3.Transform(acceleration + gravityVector, rotationMatrix);
-
-        return acceleration;
-    }
-
-    public void GetAccelValues(ref AccelDataItem accelDataItem, float delta)
-    {
-        const float LIMIT = 4.0f; //Declared in connection init
-
-        VRControllerState_t controllerState = new();
-        TrackedDevicePose_t trackedDevicePose = new();
-
-        uint cid = foundControllerRight == invalidController ? foundController : foundControllerRight;
-        OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, cid, ref controllerState, (uint) Marshal.SizeOf(typeof(VRControllerState_t)), ref trackedDevicePose);
-        
-        Vector3 velocity = new(trackedDevicePose.vVelocity.v0, trackedDevicePose.vVelocity.v1, trackedDevicePose.vVelocity.v2);
-        Vector3 acceleration = (velocity - _lastVelocity) / delta;
-        _lastVelocity = velocity;
-
-        acceleration = ApplyGravityAndRotation(trackedDevicePose.mDeviceToAbsoluteTracking, acceleration);
-        Vector3 accelerationInGs = acceleration / GRAVITY;
-
-        // Set data message values
-        accelDataItem.X = Math.Clamp(accelerationInGs.Y, -LIMIT, LIMIT);
-        accelDataItem.Y = Math.Clamp(-accelerationInGs.Z, -LIMIT, LIMIT);
-        accelDataItem.Z = Math.Clamp(-accelerationInGs.X, -LIMIT, LIMIT);
+        {
+            await _connection.SendAsync(request);
+        }
     }
 
     public async Task Update()
     {
-        if (client != null && _sendScoringData)
+        if (_connection == null)
         {
-            int batchCount = 25;
-            int batchSize = 2;
-            int packetsTotal = batchCount * batchSize; //Declared in connection init
-            int delta = 1000 / packetsTotal;
-            int accelAcqLatency = delta * batchSize; //Declared in connection init
+            return;
+        }
 
-            for (int j = 0; j < batchCount; ++j)
+        if (!_sendScoringData)
+        {
+            return;
+        }
+
+        for (int j = 0; j < AccelBatchCount; ++j)
+        {
+            JdPhoneScoringData scoringData = new()
             {
-                JdPhoneScoringData scoringData = new()
-                {
-                    Timestamp = _scoringDataSent,
-                    AccelData = new AccelDataItem[batchSize]
-                };
+                Timestamp = _scoringDataSent,
+                AccelData = new AccelDataItem[AccelBatchSize]
+            };
 
-                for (int i = 0; i < scoringData.AccelData.Length; ++i)
-                {
-                    GetAccelValues(ref scoringData.AccelData[i], delta / 1000.0f);
-                    Console.WriteLine(scoringData.AccelData[i].X + " " + scoringData.AccelData[i].Y + " " + scoringData.AccelData[i].Z);
-                    _scoringDataSent++;
-                    Thread.Sleep(delta);
-                }
+            for (int i = 0; i < scoringData.AccelData.Length; ++i)
+            {
+                _vrHandler.GetAccelValues(ref scoringData.AccelData[i], AccelAcqDelta / 1000.0f);
+                _scoringDataSent++;
 
-                await client.SendAsync(scoringData);
+                Console.WriteLine("Accel data: " + scoringData.AccelData[i].X + " " + scoringData.AccelData[i].Y + " " + scoringData.AccelData[i].Z);
+                Thread.Sleep(AccelAcqDelta);
             }
+
+            await _connection.SendAsync(scoringData);
         }
     }
 
-    private static Client? client = null;
-
-    const uint invalidController = OpenVR.k_unMaxTrackedDeviceCount + 1;
-    static uint foundController = invalidController;
-    static uint foundControllerRight = invalidController;
-
-    private static void StartOpenVR()
+    public void Start()
     {
-        EVRInitError error = EVRInitError.None;
-        OpenVR.Init(ref error, EVRApplicationType.VRApplication_Background);
-
-        for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; ++i)
+        if (Started)
         {
-            ETrackedDeviceClass cls = OpenVR.System.GetTrackedDeviceClass(i);
-            if (cls != ETrackedDeviceClass.Controller) continue;
-            ETrackedControllerRole role = OpenVR.System.GetControllerRoleForTrackedDeviceIndex(i);
-            if (foundController == invalidController) foundController = i;
-            if (foundControllerRight == invalidController && role == ETrackedControllerRole.RightHand) foundControllerRight = i;
+            return;
         }
 
-        //OpenVR.Shutdown();
+        Started = true;
+
+        new Thread(UpdateLoop).Start();
     }
 
-    public async static void Start()
+    public async Task Stop()
     {
-        KeyIntercept.OnKeyPressed += KeyPressed;
-        StartOpenVR();
+        if (!Started || _connection == null)
+        {
+            return;
+        }
 
-        while (true)
+        Started = false;
+
+        await _connection.DisconnectAsync();
+    }
+
+    public async void UpdateLoop()
+    {
+        _intercept.KeyPressed = KeyPressed;
+        _intercept.Start();
+        _vrHandler.Start();
+
+        while (Started)
         {
             Console.WriteLine("Hosts scanning started.");
+
             var discovery = new DiscoveryManager
             {
                 SingleShot = true
             };
             discovery.Discover();
+
             //TODO: refactor it
             while (!discovery.IsCompleted)
             {
@@ -273,23 +252,30 @@ public class Client : WebSocketConnection
             var host = discovery.FoundHosts.First();
             Console.WriteLine($"Connecting using first found host: {host}.");
 
-            client = new Client(host)
+            _connection = new WebSocketConnection(host)
             {
-                PrintPackets = false
+                PrintPackets = false,
+                HandleResponse = HandleResponse,
+                AccelAcquisitionFreqHz = AccelTotalPackets,
+                AccelAcquisitionLatency = AccelAcqLatency,
+                AccelMaxRange = OpenVRHandler.LIMIT
             };
 
-            await client.ConnectAsync();
+            await _connection.ConnectAsync();
 
-            while (client.IsAlive)
+            while (_connection.IsAlive)
             {
-                await client.Update();
+                await Update();
             }
         }
+
+        _vrHandler.Stop();
+        _intercept.Stop();
     }
 
-    public static async void KeyPressed(ConsoleKey key)
+    public async void KeyPressed(ConsoleKey key)
     {
-        if (client == null)
+        if (_connection == null)
         {
             return;
         }
@@ -298,37 +284,37 @@ public class Client : WebSocketConnection
         {
             case ConsoleKey.U:
                 {
-                    await client.DisconnectAsync();
+                    await Stop();
                     return;
                 }
             case ConsoleKey.J:
                 {
-                    await client.Navigate(Client.NavigationAction.SwipeLeft);
+                    await Navigate(Client.NavigationAction.SwipeLeft);
                     break;
                 }
             case ConsoleKey.L:
                 {
-                    await client.Navigate(Client.NavigationAction.SwipeRight);
+                    await Navigate(Client.NavigationAction.SwipeRight);
                     break;
                 }
             case ConsoleKey.I:
                 {
-                    await client.Navigate(Client.NavigationAction.SwipeUp);
+                    await Navigate(Client.NavigationAction.SwipeUp);
                     break;
                 }
             case ConsoleKey.K:
                 {
-                    await client.Navigate(Client.NavigationAction.SwipeDown);
+                    await Navigate(Client.NavigationAction.SwipeDown);
                     break;
                 }
             case ConsoleKey.O:
                 {
-                    await client.Navigate(Client.NavigationAction.ActionLeft);
+                    await Navigate(Client.NavigationAction.ActionLeft);
                     break;
                 }
             case ConsoleKey.P:
                 {
-                    await client.Navigate(Client.NavigationAction.ActionRight);
+                    await Navigate(Client.NavigationAction.ActionRight);
                     break;
                 }
         }

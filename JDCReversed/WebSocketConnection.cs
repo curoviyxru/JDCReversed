@@ -1,6 +1,5 @@
 ﻿using System.Net.WebSockets;
 using JDCReversed.Packets;
-using Newtonsoft.Json;
 using Websocket.Client;
 
 namespace JDCReversed;
@@ -10,6 +9,11 @@ namespace JDCReversed;
 //TODO: assets/images downloading?
 public class WebSocketConnection
 {
+    public double AccelAcquisitionFreqHz { get; set; } = 50;
+    public double AccelMaxRange { get; set; } = 4;
+    public double AccelAcquisitionLatency { get; set; } = 50;
+    public Action<JdObject?>? HandleResponse { get; set; }
+
     private readonly WebsocketClient _ws;
 
     public WebSocketConnection(string host)
@@ -29,7 +33,7 @@ public class WebSocketConnection
     }
 
     public bool IsAlive => _ws.IsStarted;
-    public bool PrintPackets { get; set; }
+    public bool PrintPackets { get; set; } = false;
 
     private void HandleOnClose(DisconnectionInfo result)
     {
@@ -104,12 +108,7 @@ public class WebSocketConnection
             }
         }
 
-        HandleResponse(raw);
-    }
-
-    public virtual void HandleResponse(JdObject? response)
-    {
-        
+        HandleResponse?.Invoke(raw);
     }
 
     public async Task ConnectAsync()
@@ -121,12 +120,12 @@ public class WebSocketConnection
             //Android: "0.1" in code
             ClientVersion = "0.1",
             //Android: 0 in code
-            AccelAcquisitionFreqHz = 50,
+            AccelAcquisitionFreqHz = AccelAcquisitionFreqHz,
             //Not Android (iOS): 4f
             //Android: android.hardware.Sensor.getMaximumRange() / 9.80665f
-            AccelMaxRange = 4,
+            AccelMaxRange = AccelMaxRange,
             //Android: 40 in code
-            AccelAcquisitionLatency = 50,
+            AccelAcquisitionLatency = AccelAcquisitionLatency,
             //TODO: how to authorize?
             JmcsToken = string.Empty
         });
@@ -134,7 +133,6 @@ public class WebSocketConnection
 
     public async Task DisconnectAsync()
     {
-        //TODO: localizable strings
         Console.WriteLine("Disconnecting");
         await _ws.Stop(WebSocketCloseStatus.EndpointUnavailable, "CLOSE_GOING_AWAY");
     }
