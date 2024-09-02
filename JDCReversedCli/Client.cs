@@ -210,6 +210,10 @@ public class Client
         }
 
         Started = true;
+        
+        _intercept.KeyPressed = KeyPressed;
+        _intercept.Start();
+        _vrHandler.Start();
 
         new Thread(UpdateLoop).Start();
     }
@@ -228,10 +232,6 @@ public class Client
 
     public async void UpdateLoop()
     {
-        _intercept.KeyPressed = KeyPressed;
-        _intercept.Start();
-        _vrHandler.Start();
-
         while (Started)
         {
             Console.WriteLine("Hosts scanning started.");
