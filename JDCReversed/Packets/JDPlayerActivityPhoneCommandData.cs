@@ -8,6 +8,8 @@ public class JdPlayerActivityPhoneCommandData : JdObject
     {
     }
 
+    // Should be 0 (close photo) or 1 (open photo) probably
     [JsonProperty("activity")]
-    public int Activity { get; set; }
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool Activity { get; set; }
 }

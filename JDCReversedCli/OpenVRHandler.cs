@@ -15,7 +15,7 @@ class OpenVRHandler
     public void Start()
     {
         EVRInitError error = EVRInitError.None;
-        OpenVR.Init(ref error, EVRApplicationType.VRApplication_Overlay);
+        OpenVR.Init(ref error, EVRApplicationType.VRApplication_Background);
 
         if (error != EVRInitError.None)
         {

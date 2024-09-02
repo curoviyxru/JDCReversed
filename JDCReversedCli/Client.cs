@@ -161,6 +161,14 @@ public class Client
                     };
                     break;
                 }
+            case NavigationAction.SelectionConfirm:
+                {
+                    request = new JdInputPhoneCommandData()
+                    {
+                        Input = JdInputPhoneCommandData.ActionInput.ACCEPT
+                    };
+                    break;
+                }
         }
 
         if (request != null)
@@ -212,7 +220,7 @@ public class Client
         Started = true;
         
         _intercept.KeyPressed = KeyPressed;
-        _intercept.Start();
+        //_intercept.Start();
         _vrHandler.Start();
 
         new Thread(UpdateLoop).Start();

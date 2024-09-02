@@ -40,14 +40,16 @@ public class JdObject
 
     public static JdObject? Deserialize(string data)
     {
-        //TODO: automatic registration
+        //TODO: Automatic data object type registration
         //TODO: JsonConverter
-        //TODO: JD_Custom_PhoneCommandData/JD_Input_PhoneCommandData from modern client and other new packets
-        //https://github.com/redphx/joydance/blob/main/joydance/__init__.py#L384
-        //game binary
-        //server spoofing
+        //TODO: Reverse other new packets from modern client
+        
         var dict = new Dictionary<string, Type>
         {
+            { "JD_Unpause_PhoneCommandData", typeof(JDUnpausePhoneCommandData) },
+            { "JD_GoBack_PhoneCommandData", typeof(JDGoBackPhoneCommandData) },
+            { "JD_GoToConnection_PhoneCommandData", typeof(JDGoToConnectionPhoneCommandData) },
+            { "JD_ChangeProfile_PhoneCommandData", typeof(JDChangeProfilePhoneCommandData) },
             { "JD_PhoneDataCmdHandshakeHello", typeof(JdPhoneDataCmdHandshakeHello) },
             { "JD_PhoneDataCmdHandshakeContinue", typeof(JdPhoneDataCmdHandshakeContinue) },
             { "JD_PhoneDataCmdSync", typeof(JdPhoneDataCmdSync) },
@@ -90,6 +92,8 @@ public class JdObject
             { "JD_PhoneUiCoachItem", typeof(JdPhoneUiCoachItem) },
             { "JD_ChangeCoach_PhoneCommandData", typeof(JdChangeCoachPhoneCommandData) },
             { "JD_Pause_PhoneCommandData", typeof(JdPausePhoneCommandData) },
+            { "JD_Input_PhoneCommandData", typeof(JdInputPhoneCommandData) },
+            { "JD_Custom_PhoneCommandData", typeof(JdCustomPhoneCommandData) },
             { "JD_StartGame_PhoneCommandData", typeof(JdStartGamePhoneCommandData) },
             { "JD_SubmitKeyboard_PhoneCommandData", typeof(JdSubmitKeyboardPhoneCommandData) },
             { "JD_SimplePhoneUiData", typeof(JdSimplePhoneUiData) },
@@ -98,6 +102,7 @@ public class JdObject
             { "JD_CarouselContentComponent_Dancer", typeof(JdtvComponent) },
             { "JD_CarouselContentComponent_Song", typeof(JdtvComponent) }
         };
+        
         var stub = JsonConvert.DeserializeObject<JdObject>(data);
         if (stub == null || !dict.ContainsKey(stub.ClassName))
             return stub;
