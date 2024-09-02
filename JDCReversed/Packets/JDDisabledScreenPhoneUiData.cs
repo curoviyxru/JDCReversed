@@ -8,5 +8,6 @@ public class JdDisabledScreenPhoneUiData : JdObject
     {
     }
 
-    [JsonProperty("displayText")] public string? DisplayText { get; set; }
+    [JsonProperty("displayText")]
+    public string? DisplayText { get; set; }
 }

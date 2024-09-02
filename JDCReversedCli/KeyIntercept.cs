@@ -26,7 +26,8 @@ public class KeyIntercept
         using Process curProcess = Process.GetCurrentProcess();
         using ProcessModule? curModule = curProcess.MainModule;
 
-        if (curModule == null) {
+        if (curModule == null)
+        {
             return 0;
         }
 

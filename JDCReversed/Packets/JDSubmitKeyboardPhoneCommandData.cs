@@ -8,5 +8,6 @@ public class JdSubmitKeyboardPhoneCommandData : JdObject
     {
     }
 
-    [JsonProperty("keyboardOutput")] public string? KeyboardOutput { get; set; }
+    [JsonProperty("keyboardOutput")]
+    public string? KeyboardOutput { get; set; }
 }

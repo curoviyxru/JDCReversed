@@ -8,6 +8,9 @@ public class JdPhoneUiLobby : JdObject
     {
     }
 
-    [JsonProperty("startButton")] public JdPhoneItem? StartButton { get; set; }
-    [JsonProperty("coaches")] public JdPhoneUiLobbyItemBase[]? Coaches { get; set; }
+    [JsonProperty("startButton")]
+    public JdPhoneItem? StartButton { get; set; }
+    
+    [JsonProperty("coaches")]
+    public JdPhoneUiLobbyItemBase[]? Coaches { get; set; }
 }

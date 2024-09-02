@@ -4,5 +4,6 @@ namespace JDCReversed.JDTV;
 
 public class JdtvCatalog
 {
-    [JsonProperty("categories")] public JdtvCategory[]? Categories { get; set; }
+    [JsonProperty("categories")]
+    public JdtvCategory[]? Categories { get; set; }
 }

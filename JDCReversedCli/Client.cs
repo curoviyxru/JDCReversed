@@ -275,6 +275,9 @@ public class Client
 
     public async void KeyPressed(ConsoleKey key)
     {
+        //TODO: full gameplay navigation
+        //TODO: OpenVR navigation
+
         if (_connection == null)
         {
             return;

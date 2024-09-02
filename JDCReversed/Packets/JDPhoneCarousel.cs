@@ -8,10 +8,14 @@ public class JdPhoneCarousel : JdObject
     {
     }
 
-    //TODO: integer boolean
-    [JsonProperty("hasVisibleActions")] public int HasVisibleActions { get; set; }
+    [JsonProperty("hasVisibleActions")]
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool HasVisibleActions { get; set; }
 
-    //TODO: integer boolean
-    [JsonProperty("isEnabled")] public int IsEnabled { get; set; }
-    [JsonProperty("rows")] public JdPhoneCarouselRow[]? Rows { get; set; }
+    [JsonProperty("isEnabled")]
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool IsEnabled { get; set; }
+
+    [JsonProperty("rows")]
+    public JdPhoneCarouselRow[]? Rows { get; set; }
 }

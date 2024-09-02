@@ -8,5 +8,6 @@ public class JdPlaySoundConsoleCommandData : JdObject
     {
     }
 
-    [JsonProperty("soundIndex")] public int SoundIndex { get; set; }
+    [JsonProperty("soundIndex")]
+    public int SoundIndex { get; set; }
 }

@@ -145,9 +145,14 @@ public class WebSocketConnection
                 { "root", obj }
             }
             : obj;
+
         var serialized = JdObject.Serialize(obj);
+
         if (PrintPackets)
+        {
             Console.WriteLine(serialized);
+        }
+
         await _ws.SendInstant(serialized);
     }
 }

@@ -46,7 +46,7 @@ class OpenVRHandler
     private static Vector3 ApplyGravityAndRotation(HmdMatrix34_t matrix, Vector3 acceleration)
     {
         // Define the gravity vector
-        Vector3 gravityVector = new(0, -GRAVITY, 0); // Gravity acts downwards in Z axis
+        Vector3 gravityVector = new(0, -GRAVITY, 0); // Gravity acts downwards in Y axis
 
         // Convert the HMDMatrix34_t to a rotation matrix (3x3)
         Matrix4x4 rotationMatrix = new(
@@ -70,10 +70,12 @@ class OpenVRHandler
         OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, FoundController, 
             ref controllerState, (uint)Marshal.SizeOf(typeof(VRControllerState_t)), ref trackedDevicePose);
 
+        // Calculate acceleration from velocity
         Vector3 velocity = new(trackedDevicePose.vVelocity.v0, trackedDevicePose.vVelocity.v1, trackedDevicePose.vVelocity.v2);
         Vector3 acceleration = (velocity - LastVelocity) / delta;
         LastVelocity = velocity;
 
+        // Apply gravity and rotation, convert from m/s/s to g
         acceleration = ApplyGravityAndRotation(trackedDevicePose.mDeviceToAbsoluteTracking, acceleration);
         Vector3 accelerationInGs = acceleration / GRAVITY;
 

@@ -8,5 +8,6 @@ public class JdPhoneDataCmdSyncStart : JdObject
     {
     }
 
-    [JsonProperty("phoneID")] public int PhoneId { get; set; }
+    [JsonProperty("phoneID")]
+    public int PhoneId { get; set; }
 }

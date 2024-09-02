@@ -8,16 +8,21 @@ public class JdPhoneUiRecap : JdObject
     {
     }
 
-    [JsonProperty("recapType")] public string? RecapType { get; set; }
+    [JsonProperty("recapType")]
+    public string? RecapType { get; set; }
 
-    [JsonProperty("recapData")] public RecapDataSet? RecapData { get; set; }
+    [JsonProperty("recapData")]
+    public RecapDataSet? RecapData { get; set; }
 
-    [JsonProperty("recapDisplayText")] public string? RecapDisplayText { get; set; }
+    [JsonProperty("recapDisplayText")]
+    public string? RecapDisplayText { get; set; }
 
     public class RecapDataSet
     {
-        [JsonProperty("songScore")] public int SongScore { get; set; }
+        [JsonProperty("songScore")]
+        public int SongScore { get; set; }
 
-        [JsonProperty("stars")] public int Stars { get; set; }
+        [JsonProperty("stars")]
+        public int Stars { get; set; }
     }
 }

@@ -9,9 +9,13 @@ public class JdPhoneUiCoachItem : JdObject
     }
 
     //TODO: image URL destination?
-    [JsonProperty("image")] public string? Image { get; set; }
+    [JsonProperty("image")]
+    public string? Image { get; set; }
 
-    //TODO: integer boolean
-    [JsonProperty("selectedOnEnter")] public int SelectedOnEnter { get; set; }
-    [JsonProperty("actions")] public JdPhoneAction[]? Actions { get; set; }
+    [JsonProperty("selectedOnEnter")]
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool SelectedOnEnter { get; set; }
+
+    [JsonProperty("actions")]
+    public JdPhoneAction[]? Actions { get; set; }
 }

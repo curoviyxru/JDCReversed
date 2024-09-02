@@ -8,9 +8,13 @@ public class JdPhoneUiGameplay : JdObject
     {
     }
 
-    [JsonProperty("text")] public string? Text { get; set; }
+    [JsonProperty("text")]
+    public string? Text { get; set; }
 
     //TODO: image URL destination?
-    [JsonProperty("coachImage")] public string? CoachImage { get; set; }
-    [JsonProperty("pauseSlider")] public JdPhoneItemSlider? PauseSlider { get; set; }
+    [JsonProperty("coachImage")]
+    public string? CoachImage { get; set; }
+    
+    [JsonProperty("pauseSlider")]
+    public JdPhoneItemSlider? PauseSlider { get; set; }
 }

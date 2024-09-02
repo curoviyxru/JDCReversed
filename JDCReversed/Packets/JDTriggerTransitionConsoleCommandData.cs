@@ -8,5 +8,6 @@ public class JdTriggerTransitionConsoleCommandData : JdObject
     {
     }
 
-    [JsonProperty("displayText")] public string? DisplayText { get; set; }
+    [JsonProperty("displayText")]
+    public string? DisplayText { get; set; }
 }

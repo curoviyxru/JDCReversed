@@ -8,7 +8,9 @@ public class JdChangeItemPhoneCommandData : JdObject
     {
     }
 
-    [JsonProperty("rowIndex")] public int RowIndex { get; set; }
+    [JsonProperty("rowIndex")]
+    public int RowIndex { get; set; }
 
-    [JsonProperty("itemIndex")] public int ItemIndex { get; set; }
+    [JsonProperty("itemIndex")]
+    public int ItemIndex { get; set; }
 }

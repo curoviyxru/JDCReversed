@@ -8,7 +8,11 @@ public class JdEnableCarouselConsoleCommandData : JdObject
     {
     }
 
-    [JsonProperty("isEnabled")] public int IsEnabled { get; set; } //TODO: integer boolean
+    [JsonProperty("isEnabled")] 
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool IsEnabled { get; set; }
 
-    [JsonProperty("applyOnPopup")] public int ApplyOnPopup { get; set; } //TODO: integer boolean
+    [JsonProperty("applyOnPopup")]
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool ApplyOnPopup { get; set; }
 }

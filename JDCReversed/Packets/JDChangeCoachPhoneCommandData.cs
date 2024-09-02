@@ -8,5 +8,6 @@ public class JdChangeCoachPhoneCommandData : JdObject
     {
     }
 
-    [JsonProperty("coachId")] public int CoachId { get; set; }
+    [JsonProperty("coachId")]
+    public int CoachId { get; set; }
 }

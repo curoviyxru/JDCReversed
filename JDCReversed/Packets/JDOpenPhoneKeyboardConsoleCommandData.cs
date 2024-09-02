@@ -8,5 +8,7 @@ public class JdOpenPhoneKeyboardConsoleCommandData : JdObject
     {
     }
 
-    [JsonProperty("isPassword")] public int IsPassword { get; set; } //TODO: integer boolean
+    [JsonProperty("isPassword")]
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool IsPassword { get; set; }
 }

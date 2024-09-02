@@ -8,7 +8,8 @@ public class JdPhoneDataCmdHandshakeHello : JdObject
     {
     }
 
-    [JsonProperty("clientVersion")] public string? ClientVersion { get; set; }
+    [JsonProperty("clientVersion")]
+    public string? ClientVersion { get; set; }
 
     [JsonProperty("accelAcquisitionFreqHz")]
     public double AccelAcquisitionFreqHz { get; set; }
@@ -16,7 +17,9 @@ public class JdPhoneDataCmdHandshakeHello : JdObject
     [JsonProperty("accelAcquisitionLatency")]
     public double AccelAcquisitionLatency { get; set; }
 
-    [JsonProperty("accelMaxRange")] public double AccelMaxRange { get; set; }
+    [JsonProperty("accelMaxRange")]
+    public double AccelMaxRange { get; set; }
 
-    [JsonProperty("jmcsToken")] public string? JmcsToken { get; set; }
+    [JsonProperty("jmcsToken")]
+    public string? JmcsToken { get; set; }
 }

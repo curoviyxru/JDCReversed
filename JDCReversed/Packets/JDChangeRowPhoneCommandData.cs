@@ -8,5 +8,6 @@ public class JdChangeRowPhoneCommandData : JdObject
     {
     }
 
-    [JsonProperty("rowIndex")] public int RowIndex { get; set; }
+    [JsonProperty("rowIndex")]
+    public int RowIndex { get; set; }
 }

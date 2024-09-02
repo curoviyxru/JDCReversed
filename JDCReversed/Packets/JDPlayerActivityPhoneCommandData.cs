@@ -8,5 +8,6 @@ public class JdPlayerActivityPhoneCommandData : JdObject
     {
     }
 
-    [JsonProperty("activity")] public int Activity { get; set; }
+    [JsonProperty("activity")]
+    public int Activity { get; set; }
 }

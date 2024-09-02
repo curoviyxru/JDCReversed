@@ -8,7 +8,9 @@ public class JdPhoneCarouselRow : JdObject
     {
     }
 
-    [JsonProperty("title")] public string? Title { get; set; } //TODO: formatted string
+    [JsonProperty("title")]
+    public string? Title { get; set; } //TODO: formatted string
 
-    [JsonProperty("items")] public JdPhoneItem[]? Items { get; set; }
+    [JsonProperty("items")]
+    public JdPhoneItem[]? Items { get; set; }
 }

@@ -8,9 +8,13 @@ public class JdPhoneUiLobbyItemBase : JdObject
     {
     }
 
-    [JsonProperty("image")] public string? Image { get; set; } //TODO: image URL destination?
+    [JsonProperty("image")]
+    public string? Image { get; set; } //TODO: image URL destination?
 
-    [JsonProperty("selectedOnEnter")] public int SelectedOnEnter { get; set; } //TODO: integer boolean
+    [JsonProperty("selectedOnEnter")]
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool SelectedOnEnter { get; set; }
 
-    [JsonProperty("actions")] public JdPhoneAction[]? Actions { get; set; }
+    [JsonProperty("actions")]
+    public JdPhoneAction[]? Actions { get; set; }
 }

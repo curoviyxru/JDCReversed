@@ -1,9 +1,26 @@
-﻿using System.Runtime.Serialization;
-using JDCReversed.JDTV;
+﻿using JDCReversed.JDTV;
 using JDCReversed.Packets;
 using Newtonsoft.Json;
 
 namespace JDCReversed;
+
+public class IntegerBooleanConverter : JsonConverter<bool>
+{
+    public override void WriteJson(JsonWriter writer, bool value, JsonSerializer serializer)
+    {
+        writer.WriteValue(value ? 1 : 0);
+    }
+
+    public override bool ReadJson(JsonReader reader, Type objectType, bool existingValue, bool hasExistingValue, JsonSerializer serializer)
+    {
+        if (reader.TokenType == JsonToken.Integer)
+        {
+            return Convert.ToInt32(reader.Value) == 1;
+        }
+
+        return false;
+    }
+}
 
 public class JdObject
 {

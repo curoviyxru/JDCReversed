@@ -35,11 +35,11 @@ public class JdPhoneScoringData : JdObject
     {
     }
 
-    //TODO: Total count of accel data items that were sent previously
+    //Total count of accel data items that were sent previously
     [JsonProperty("timestamp")]
     public int Timestamp { get; set; }
 
-    //TODO: Maximum 10 items in array
+    //Maximum 10 items in array (TODO: verification?)
     [JsonProperty("accelData")] 
     public AccelDataItem[]? AccelData { get; set; }
 }

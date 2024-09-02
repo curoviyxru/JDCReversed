@@ -8,9 +8,12 @@ public class JdValidateActionPhoneCommandData : JdObject
     {
     }
 
-    [JsonProperty("rowIndex")] public int RowIndex { get; set; }
+    [JsonProperty("rowIndex")]
+    public int RowIndex { get; set; }
 
-    [JsonProperty("itemIndex")] public int ItemIndex { get; set; }
+    [JsonProperty("itemIndex")]
+    public int ItemIndex { get; set; }
 
-    [JsonProperty("actionIndex")] public int ActionIndex { get; set; }
+    [JsonProperty("actionIndex")]
+    public int ActionIndex { get; set; }
 }

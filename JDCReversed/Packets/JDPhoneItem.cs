@@ -8,13 +8,20 @@ public class JdPhoneItem : JdObject
     {
     }
 
-    [JsonProperty("title")] public string? Title { get; set; }
+    [JsonProperty("title")]
+    public string? Title { get; set; }
 
-    [JsonProperty("image")] public string? Image { get; set; } //TODO: image URL destination?
+    [JsonProperty("image")]
+    public string? Image { get; set; } //TODO: image URL destination?
 
-    [JsonProperty("isEnabled")] public int IsEnabled { get; set; } //TODO: integer boolean
+    [JsonProperty("isEnabled")]
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool IsEnabled { get; set; }
 
-    [JsonProperty("isLocked")] public int IsLocked { get; set; } //TODO: integer boolean
+    [JsonProperty("isLocked")] 
+    [JsonConverter(typeof(IntegerBooleanConverter))]
+    public bool IsLocked { get; set; }
 
-    [JsonProperty("actions")] public JdPhoneAction[]? Actions { get; set; }
+    [JsonProperty("actions")]
+    public JdPhoneAction[]? Actions { get; set; }
 }

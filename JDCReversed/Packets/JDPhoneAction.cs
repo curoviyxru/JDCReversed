@@ -11,8 +11,10 @@ public class JdPhoneAction : JdObject
     {
     }
 
-    [JsonProperty("title")] public string? Title { get; set; }
+    [JsonProperty("title")]
+    public string? Title { get; set; }
 
     //TODO: json string / JD action object that should be sent on click
-    [JsonProperty("command")] public string? Command { get; set; }
+    [JsonProperty("command")]
+    public string? Command { get; set; }
 }

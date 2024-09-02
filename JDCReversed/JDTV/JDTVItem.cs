@@ -4,5 +4,6 @@ namespace JDCReversed.JDTV;
 
 public class JdtvItem
 {
-    [JsonProperty("components")] public JdtvComponent[]? Components { get; set; }
+    [JsonProperty("components")]
+    public JdtvComponent[]? Components { get; set; }
 }
