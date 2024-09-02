@@ -11,6 +11,9 @@ class OpenVRHandler
 
     private uint FoundController = InvalidController;
     private Vector3 LastVelocity = new();
+    public bool UpdateWasSuccessful { private set; get; } = false;
+    public VRControllerState_t ControllerState { private set; get; } = new();
+    public TrackedDevicePose_t TrackedDevicePose { private set; get; } = new();
 
     public void Start()
     {
@@ -68,21 +71,33 @@ class OpenVRHandler
         return acceleration;
     }
 
-    public void GetAccelValues(ref AccelDataItem accelDataItem, float delta)
+    public void Update()
     {
+        bool prevUpdateWasSuccessful = UpdateWasSuccessful;
+
         VRControllerState_t controllerState = new();
         TrackedDevicePose_t trackedDevicePose = new();
 
-        OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, FoundController, 
+        UpdateWasSuccessful = OpenVR.System.GetControllerStateWithPose(ETrackingUniverseOrigin.TrackingUniverseStanding, FoundController, 
             ref controllerState, (uint)Marshal.SizeOf(typeof(VRControllerState_t)), ref trackedDevicePose);
 
+        ControllerState = controllerState;
+        TrackedDevicePose = trackedDevicePose;
+
+        if (!UpdateWasSuccessful && prevUpdateWasSuccessful) {
+            Console.WriteLine("Can't update controller state!");
+        }
+    }
+
+    public void GetAccelValues(ref AccelDataItem accelDataItem, float delta)
+    {
         // Calculate acceleration from velocity
-        Vector3 velocity = new(trackedDevicePose.vVelocity.v0, trackedDevicePose.vVelocity.v1, trackedDevicePose.vVelocity.v2);
+        Vector3 velocity = new(TrackedDevicePose.vVelocity.v0, TrackedDevicePose.vVelocity.v1, TrackedDevicePose.vVelocity.v2);
         Vector3 acceleration = (velocity - LastVelocity) / delta;
         LastVelocity = velocity;
 
         // Apply gravity and rotation, convert from m/s/s to g
-        acceleration = ApplyGravityAndRotation(trackedDevicePose.mDeviceToAbsoluteTracking, acceleration);
+        acceleration = ApplyGravityAndRotation(TrackedDevicePose.mDeviceToAbsoluteTracking, acceleration);
         Vector3 accelerationInGs = acceleration / GRAVITY;
 
         // Set data message values

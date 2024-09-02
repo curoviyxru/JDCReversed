@@ -4,6 +4,7 @@ using JDCReversed.Packets;
 namespace JDCReversedCli;
 
 //TODO mutexes
+//TODO OpenVR overlay
 public class Client
 {
     const int AccelBatchCount = 25;
@@ -177,7 +178,7 @@ public class Client
         }
     }
 
-    public async Task Update()
+    public async Task UpdateScoring()
     {
         if (_connection == null)
         {
@@ -199,6 +200,7 @@ public class Client
 
             for (int i = 0; i < scoringData.AccelData.Length; ++i)
             {
+                _vrHandler.Update();
                 _vrHandler.GetAccelValues(ref scoringData.AccelData[i], AccelAcqDelta / 1000.0f);
                 _scoringDataSent++;
 
@@ -242,6 +244,7 @@ public class Client
     {
         while (Started)
         {
+            //TODO Reset client state (navigation, tracking)
             Console.WriteLine("Hosts scanning started.");
 
             var discovery = new DiscoveryManager
@@ -278,7 +281,7 @@ public class Client
 
             while (_connection.IsAlive)
             {
-                await Update();
+                await UpdateScoring();
             }
         }
 
