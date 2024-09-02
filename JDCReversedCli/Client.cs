@@ -14,7 +14,7 @@ public class Client
 
     public enum NavigationAction
     {
-        SwipeLeft, SwipeRight, SwipeUp, SwipeDown, ActionLeft, ActionRight
+        SwipeLeft, SwipeRight, SwipeUp, SwipeDown, SelectionConfirm, ActionLeft, ActionRight
     }
 
     private int _currentRow;
@@ -218,14 +218,14 @@ public class Client
         new Thread(UpdateLoop).Start();
     }
 
-    public async Task Stop()
+    public async Task Stop(bool reconnect = false)
     {
         if (!Started || _connection == null)
         {
             return;
         }
 
-        Started = false;
+        Started = reconnect;
 
         await _connection.DisconnectAsync();
     }
@@ -290,9 +290,14 @@ public class Client
 
         switch (key)
         {
+            case ConsoleKey.Y:
+                {
+                    await Stop(true);
+                    return;
+                }
             case ConsoleKey.U:
                 {
-                    await Stop();
+                    await Navigate(Client.NavigationAction.SelectionConfirm);
                     return;
                 }
             case ConsoleKey.J:
