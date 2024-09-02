@@ -6,7 +6,7 @@ using Valve.VR;
 class OpenVRHandler
 {
     public const float GRAVITY = 9.80665f;
-    public const float LIMIT = 4.0f;
+    public const float LIMIT = 8.0f;
     private const uint InvalidController = OpenVR.k_unMaxTrackedDeviceCount + 1;
 
     private uint FoundController = InvalidController;
@@ -62,25 +62,23 @@ class OpenVRHandler
             0, 0, 0, 1
         );
 
-        // Add rotations on the X and Y axes
+        // Add rotations on matrix
         Matrix4x4 xRotation = Matrix4x4.CreateRotationX((float)(Math.PI / 2));
         Matrix4x4 yRotation = Matrix4x4.CreateRotationY((float)(Math.PI / 2));
-        Matrix4x4 zRotation = Matrix4x4.CreateRotationZ((float)(-Math.PI / 2));
 
         // Combine rotations by multiplying matrices in the desired order
-        Matrix4x4 rotationMatrix = xRotation * yRotation * zRotation;
+        Matrix4x4 rotationMatrix = controllerRotationMatrix * xRotation * yRotation;
 
         // Rotate the acceleration vector by the controller's rotation matrix
-        // TODO: Use controller rotation matrix to rotate acceleration
         acceleration = Vector3.Transform(acceleration, rotationMatrix);
 
-        //Inverse acceleration of Z axis
-        acceleration *= new Vector3(1, 1, -1);
-
         // Apply gravity vector
-        Vector3 gravityVector = new(0, GRAVITY, 0);
-        gravityVector = Vector3.Transform(gravityVector, controllerRotationMatrix * rotationMatrix);
+        Vector3 gravityVector = new(0, -GRAVITY, 0);
+        gravityVector = Vector3.Transform(gravityVector, rotationMatrix);
         acceleration += gravityVector;
+
+        // Swap acceleration axis
+        acceleration = new Vector3(acceleration.Y, acceleration.X, acceleration.Z);
 
         return acceleration;
     }
