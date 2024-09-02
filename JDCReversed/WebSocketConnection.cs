@@ -14,7 +14,9 @@ public class WebSocketConnection
     public double AccelAcquisitionLatency { get; set; } = 50;
     public Action<JdObject?>? HandleResponse { get; set; }
 
+    public bool PrintPackets { get; set; } = false;
     private readonly WebsocketClient _ws;
+    public bool IsAlive => _ws.IsStarted && _ws.IsRunning;
 
     public WebSocketConnection(string host)
     {
@@ -32,9 +34,6 @@ public class WebSocketConnection
         _ws.IsReconnectionEnabled = false;
     }
 
-    public bool IsAlive => _ws.IsStarted;
-    public bool PrintPackets { get; set; } = false;
-
     private void HandleOnClose(DisconnectionInfo result)
     {
         Console.WriteLine($"Closed: {result.CloseStatus}, {result.CloseStatusDescription}");
@@ -47,13 +46,12 @@ public class WebSocketConnection
             case WebSocketMessageType.Binary:
                 Console.WriteLine("Got a binary. Skipping.");
                 return;
-            case WebSocketMessageType.Close:
-                await DisconnectAsync();
-                return;
         }
 
         if (PrintPackets)
+        {
             Console.WriteLine(msg.Text);
+        }
 
         var raw = JdObject.Deserialize(msg.Text);
         switch (raw)
@@ -81,6 +79,11 @@ public class WebSocketConnection
                 Console.WriteLine($"Phone connected: {data.PhoneId}");
                 break;
             }
+            case Jd2015NotPhoneScoring _:
+            {
+                await DisconnectAsync();
+                break;
+            }
             case JdPhoneDataCmdSyncStart _: break;
             case JdProfilePhoneUiData _: break;
             case JdEnablePhotoConsoleCommandData _: break;
@@ -96,11 +99,6 @@ public class WebSocketConnection
             case JdNewPhotoConsoleCommandData _: break;
             case JdOpenPhoneKeyboardConsoleCommandData _: break;
             case JdEnableCarouselConsoleCommandData _: break;
-            case Jd2015NotPhoneScoring _:
-            {
-                await DisconnectAsync();
-                break;
-            }
             default:
             {
                 Console.WriteLine($"Got unknown data: {msg.Text}");
