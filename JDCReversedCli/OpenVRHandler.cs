@@ -53,20 +53,34 @@ class OpenVRHandler
     }
 
     private static Vector3 ApplyGravityAndRotation(HmdMatrix34_t matrix, Vector3 acceleration)
-    {
-        // Define the gravity vector
-        Vector3 gravityVector = new(0, -GRAVITY, 0); // Gravity acts downwards in Y axis
-
+    { 
         // Convert the HMDMatrix34_t to a rotation matrix (3x3)
-        Matrix4x4 rotationMatrix = new(
+        Matrix4x4 controllerRotationMatrix = new(
             matrix.m0, matrix.m1, matrix.m2, 0,
             matrix.m4, matrix.m5, matrix.m6, 0,
             matrix.m8, matrix.m9, matrix.m10, 0,
             0, 0, 0, 1
         );
 
+        // Add rotations on the X and Y axes
+        Matrix4x4 xRotation = Matrix4x4.CreateRotationX((float)(Math.PI / 2));
+        Matrix4x4 yRotation = Matrix4x4.CreateRotationY((float)(Math.PI / 2));
+        Matrix4x4 zRotation = Matrix4x4.CreateRotationZ((float)(-Math.PI / 2));
+
+        // Combine rotations by multiplying matrices in the desired order
+        Matrix4x4 rotationMatrix = xRotation * yRotation * zRotation;
+
         // Rotate the acceleration vector by the controller's rotation matrix
-        acceleration = Vector3.Transform(acceleration + gravityVector, rotationMatrix);
+        // TODO: Use controller rotation matrix to rotate acceleration
+        acceleration = Vector3.Transform(acceleration, rotationMatrix);
+
+        //Inverse acceleration of Z axis
+        acceleration *= new Vector3(1, 1, -1);
+
+        // Apply gravity vector
+        Vector3 gravityVector = new(0, GRAVITY, 0);
+        gravityVector = Vector3.Transform(gravityVector, controllerRotationMatrix * rotationMatrix);
+        acceleration += gravityVector;
 
         return acceleration;
     }
@@ -101,8 +115,8 @@ class OpenVRHandler
         Vector3 accelerationInGs = acceleration / GRAVITY;
 
         // Set data message values
-        accelDataItem.X = Math.Clamp(accelerationInGs.Y, -LIMIT, LIMIT);
-        accelDataItem.Y = Math.Clamp(-accelerationInGs.Z, -LIMIT, LIMIT);
-        accelDataItem.Z = Math.Clamp(-accelerationInGs.X, -LIMIT, LIMIT);
+        accelDataItem.X = Math.Clamp(accelerationInGs.X, -LIMIT, LIMIT);
+        accelDataItem.Y = Math.Clamp(accelerationInGs.Y, -LIMIT, LIMIT);
+        accelDataItem.Z = Math.Clamp(accelerationInGs.Z, -LIMIT, LIMIT);
     }
 }
