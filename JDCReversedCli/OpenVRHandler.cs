@@ -15,7 +15,13 @@ class OpenVRHandler
     public void Start()
     {
         EVRInitError error = EVRInitError.None;
-        OpenVR.Init(ref error, EVRApplicationType.VRApplication_Background);
+        OpenVR.Init(ref error, EVRApplicationType.VRApplication_Overlay);
+
+        if (error != EVRInitError.None)
+        {
+            Console.WriteLine("OpenVR init error: " + error.ToString());
+            return;
+        }
 
         uint foundController = InvalidController;
         uint foundControllerRight = InvalidController;

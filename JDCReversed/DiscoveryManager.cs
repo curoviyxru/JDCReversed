@@ -27,8 +27,10 @@ public class DiscoveryManager
             if (_udp != null)
                 return;
 
-            _udp = new UdpClient(7000);
-            _udp.EnableBroadcast = true;
+            _udp = new UdpClient(7000)
+            {
+                EnableBroadcast = true
+            };
             _broadcastTimer = new Timer(500);
             _broadcastTimer.Elapsed += OnTimerElapsed;
             _broadcastTimer.Enabled = true;
@@ -140,12 +142,16 @@ public class DiscoveryManager
 
     public class DiscoveryPacket
     {
-        [JsonProperty("platform")] public string? Platform { get; set; }
+        [JsonProperty("platform")]
+        public string? Platform { get; set; }
 
-        [JsonProperty("titleId")] public string? TitleId { get; set; }
+        [JsonProperty("titleId")]
+        public string? TitleId { get; set; }
 
-        [JsonProperty("protocol")] public string? Protocol { get; set; }
+        [JsonProperty("protocol")]
+        public string? Protocol { get; set; }
 
-        [JsonProperty("consoleName")] public string? ConsoleName { get; set; }
+        [JsonProperty("consoleName")]
+        public string? ConsoleName { get; set; }
     }
 }

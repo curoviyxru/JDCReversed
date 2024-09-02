@@ -3,6 +3,7 @@ using JDCReversed.Packets;
 
 namespace JDCReversedCli;
 
+//TODO mutexes
 public class Client
 {
     const int AccelBatchCount = 25;
@@ -42,8 +43,6 @@ public class Client
 
     public void HandleResponse(JdObject? response)
     {
-        Console.WriteLine("Got response: " + response?.GetType());
-
         switch (response)
         {
             case JdPhoneUiSetupData data:
@@ -90,6 +89,11 @@ public class Client
             case JdDisableAccelValuesSendingConsoleCommandData:
                 {
                     _sendScoringData = false;
+                    break;
+                }
+            default:
+                {
+                    Console.WriteLine("Got response: " + response?.GetType());
                     break;
                 }
         }
@@ -246,7 +250,8 @@ public class Client
             if (discovery.FoundHosts.Count == 0)
             {
                 Console.WriteLine("I haven't found any hosts.");
-                return;
+                Thread.Sleep(3000);
+                continue;
             }
 
             var host = discovery.FoundHosts.First();
