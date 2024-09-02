@@ -1,4 +1,7 @@
 # JDCReversed
-A library that can connect to one popular dance game client.
+A library that implements controller protocol of one popular dance game client. 
 
-**2017 PC** version is supported only at the moment.
+# JDCReversedCli
+A simple windowless program that demonstrates connection, host discovery, API usage, navigation and scoring. Supports OpenVR tracking.
+
+**2017 PC** is the only version that tested at the moment.
