@@ -51,30 +51,36 @@ public class Client
                     _rows = data.SetupData?.MainCarousel?.Rows;
                     if (_rows != null) _rowCount = _rows.Length;
 
-                    if (data.InputSetup?.CarouselPosSetup != null)
+                    if (_rows?.Length > 0 && data.InputSetup?.CarouselPosSetup != null)
                     {
                         _currentRow = data.InputSetup.CarouselPosSetup.RowIndex;
                         var rowItems = _rows?[_currentRow].Items;
                         if (rowItems != null) _itemCount = rowItems.Length;
                         _currentItem = data.InputSetup.CarouselPosSetup.ItemIndex;
-                        var actionItems = rowItems?[_currentItem].Actions;
-                        if (actionItems != null) _actionCount = actionItems.Length;
-                        _currentAction = data.InputSetup.CarouselPosSetup.ActionIndex;
+
+                        if (rowItems?.Length > 0) {
+                            var actionItems = rowItems?[_currentItem].Actions;
+                            if (actionItems != null) _actionCount = actionItems.Length;
+                            _currentAction = data.InputSetup.CarouselPosSetup.ActionIndex;
+                        }
                     }
 
                     break;
                 }
             case JdInputSetupConsoleCommandData data:
                 {
-                    if (data.CarouselPosSetup != null)
+                    if (_rows?.Length > 0 && data.CarouselPosSetup != null)
                     {
                         _currentRow = data.CarouselPosSetup.RowIndex;
                         var rowItems = _rows?[_currentRow].Items;
                         if (rowItems != null) _itemCount = rowItems.Length;
                         _currentItem = data.CarouselPosSetup.ItemIndex;
-                        var actionItems = rowItems?[_currentItem].Actions;
-                        if (actionItems != null) _actionCount = actionItems.Length;
-                        _currentAction = data.CarouselPosSetup.ActionIndex;
+
+                        if (rowItems?.Length > 0) {
+                            var actionItems = rowItems?[_currentItem].Actions;
+                            if (actionItems != null) _actionCount = actionItems.Length;
+                            _currentAction = data.CarouselPosSetup.ActionIndex;
+                        }
                     }
 
                     break;
