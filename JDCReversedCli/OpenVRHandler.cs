@@ -63,8 +63,8 @@ class OpenVRHandler
         );
 
         // Add rotations on matrix
-        Matrix4x4 xRotation = Matrix4x4.CreateRotationX((float)(Math.PI / 2));
-        Matrix4x4 yRotation = Matrix4x4.CreateRotationY((float)(Math.PI / 2));
+        Matrix4x4 xRotation = Matrix4x4.CreateRotationX((float)(Math.PI / 2 - Math.PI / 6));
+        Matrix4x4 yRotation = Matrix4x4.CreateRotationY((float) Math.PI);
 
         // Combine rotations by multiplying matrices in the desired order
         Matrix4x4 rotationMatrix = controllerRotationMatrix * xRotation * yRotation;
@@ -73,12 +73,12 @@ class OpenVRHandler
         acceleration = Vector3.Transform(acceleration, rotationMatrix);
 
         // Apply gravity vector
-        Vector3 gravityVector = new(0, -GRAVITY, 0);
+        Vector3 gravityVector = new(0, GRAVITY, 0);
         gravityVector = Vector3.Transform(gravityVector, rotationMatrix);
         acceleration += gravityVector;
 
-        // Swap acceleration axis
-        acceleration = new Vector3(acceleration.Y, acceleration.X, acceleration.Z);
+        // Reverse Z axis acceleration
+        acceleration.Z = -acceleration.Z;
 
         return acceleration;
     }
